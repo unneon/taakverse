@@ -94,9 +94,9 @@ fn on_activate(mut tree: Rc<RefCell<Option<AppTree>>>, app: &Application) {
         );
     }
 
-    entry.connect_icon_press({
+    entry.connect_activate({
         let tree = tree.clone();
-        move |entry, _| {
+        move |entry| {
             add_task(
                 (*tree).borrow_mut().as_mut().unwrap(),
                 Uuid::new_v4(),
@@ -106,6 +106,7 @@ fn on_activate(mut tree: Rc<RefCell<Option<AppTree>>>, app: &Application) {
             entry.buffer().delete_text(0, None);
         }
     });
+    entry.connect_icon_press(|entry, _| entry.emit_activate());
 
     let content = gtk4::Box::builder()
         .orientation(Orientation::Vertical)
