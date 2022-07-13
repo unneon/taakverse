@@ -1,24 +1,43 @@
+mod disk;
+
 use gtk4::prelude::*;
 use gtk4::{
     Application, ApplicationWindow, CheckButton, Entry, Label, ListBox, Orientation, ScrolledWindow,
 };
+use std::borrow::BorrowMut;
 use std::cell::RefCell;
 use std::rc::Rc;
+use uuid::Uuid;
+
+struct TaskTree {
+    id: Uuid,
+    check_button: CheckButton,
+    label: Label,
+}
 
 struct AppTree {
     task_list: ListBox,
+    tasks: Vec<TaskTree>,
 }
 
 const APP_ID: &str = "solar.unneon.TodoThingy";
 
 fn main() {
+    let tree = Rc::new(RefCell::new(None));
     let app = Application::builder().application_id(APP_ID).build();
-    app.connect_activate(build_ui);
+    app.connect_activate({
+        let tree = tree.clone();
+        move |app| on_activate(tree.clone(), app)
+    });
+    app.connect_shutdown({
+        let tree = tree.clone();
+        move |app| on_shutdown(tree.clone(), app)
+    });
     app.run();
 }
 
-fn build_task(description: String) -> gtk4::Box {
-    let check_button = CheckButton::builder().build();
+fn build_task(id: Uuid, description: String, completed: bool) -> (gtk4::Box, TaskTree) {
+    let check_button = CheckButton::builder().active(completed).build();
     let label = Label::builder()
         .margin_start(12)
         .label(&description)
@@ -31,10 +50,23 @@ fn build_task(description: String) -> gtk4::Box {
         .build();
     row.append(&check_button);
     row.append(&label);
-    row
+    let tree = TaskTree {
+        id,
+        check_button,
+        label,
+    };
+    (row, tree)
 }
 
-fn build_ui(app: &Application) {
+fn add_task(tree: &mut AppTree, id: Uuid, description: String, completed: bool) {
+    let (row, task_tree) = build_task(id, description, completed);
+    tree.task_list.append(&row);
+    tree.tasks.push(task_tree);
+}
+
+fn on_activate(mut tree: Rc<RefCell<Option<AppTree>>>, app: &Application) {
+    let data = disk::load().unwrap();
+
     let entry = Entry::builder()
         .placeholder_text("Note a new task...")
         .secondary_icon_name("list-add-symbolic")
@@ -48,11 +80,31 @@ fn build_ui(app: &Application) {
         .child(&task_list)
         .build();
 
-    let app_tree = Rc::new(RefCell::new(AppTree { task_list }));
+    tree.borrow_mut().replace(Some(AppTree {
+        task_list,
+        tasks: Vec::new(),
+    }));
 
-    entry.connect_icon_press(move |entry, _| {
-        let row = build_task(entry.buffer().text());
-        app_tree.borrow_mut().task_list.append(&row);
+    for task in data.tasks {
+        add_task(
+            (*tree).borrow_mut().as_mut().unwrap(),
+            task.id,
+            task.description,
+            task.completed,
+        );
+    }
+
+    entry.connect_icon_press({
+        let tree = tree.clone();
+        move |entry, _| {
+            add_task(
+                (*tree).borrow_mut().as_mut().unwrap(),
+                Uuid::new_v4(),
+                entry.buffer().text(),
+                false,
+            );
+            entry.buffer().delete_text(0, None);
+        }
     });
 
     let content = gtk4::Box::builder()
@@ -73,4 +125,20 @@ fn build_ui(app: &Application) {
         .child(&content)
         .build();
     window.present();
+}
+
+fn on_shutdown(tree: Rc<RefCell<Option<AppTree>>>, _app: &Application) {
+    let tree = tree.borrow();
+    let tree = tree.as_ref().unwrap();
+    let tasks = tree
+        .tasks
+        .iter()
+        .map(|task| disk::Task {
+            id: task.id,
+            description: task.label.text().to_string(),
+            completed: task.check_button.is_active(),
+        })
+        .collect();
+    let disk_data = disk::Data { tasks };
+    disk::save(&disk_data).unwrap();
 }

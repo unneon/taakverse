@@ -4,4 +4,9 @@ version = "0.0.0"
 edition = "2021"
 
 [dependencies]
-gtk4 = "0.4"
+dirs = "4.0"
+gtk4 = { version = "0.4", features = ["v4_6"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+# TODO: Enable uuid/fast-rng feature?
+uuid = { version = "1.1", features = ["serde", "v4"] }
