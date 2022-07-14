@@ -7,7 +7,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Install system dependencies
-        run: sudo apt-get install libgtk-4-dev
+        run: sudo apt-get install libadwaita-1-dev libgtk-4-dev
       - name: Test
         uses: actions-rs/cargo@v1
         with:
@@ -18,8 +18,6 @@ jobs:
     needs: test
     steps:
       - uses: actions/checkout@v2
-      - name: Install system dependencies
-        run: sudo apt-get install libgtk-4-dev
       - name: Verify autoformatter
         uses: actions-rs/cargo@v1
         with:
@@ -32,7 +30,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Install system dependencies
-        run: sudo apt-get install libgtk-4-dev
+        run: sudo apt-get install libadwaita-1-dev libgtk-4-dev
       - name: Verify linter
         uses: actions-rs/cargo@v1
         with:

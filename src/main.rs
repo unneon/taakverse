@@ -1,9 +1,8 @@
 mod disk;
 
 use gtk4::prelude::*;
-use gtk4::{
-    Application, ApplicationWindow, CheckButton, Entry, Label, ListBox, Orientation, ScrolledWindow,
-};
+use gtk4::{CheckButton, Entry, Label, ListBox, Orientation, ScrolledWindow};
+use libadwaita::{Application, ApplicationWindow, HeaderBar};
 use std::borrow::BorrowMut;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -35,15 +34,12 @@ fn main() {
 
 fn build_task(id: Uuid, description: String, completed: bool) -> (gtk4::Box, TaskTree) {
     let check_button = CheckButton::builder().active(completed).build();
-    let label = Label::builder()
-        .margin_start(12)
-        .label(&description)
-        .build();
+    let label = Label::builder().margin_start(4).label(&description).build();
     let row = gtk4::Box::builder()
-        .margin_top(12)
-        .margin_bottom(12)
-        .margin_start(12)
-        .margin_end(12)
+        .margin_top(4)
+        .margin_bottom(4)
+        .margin_start(8)
+        .margin_end(8)
         .build();
     row.append(&check_button);
     row.append(&label);
@@ -65,6 +61,9 @@ fn on_activate(mut tree: Rc<RefCell<Option<AppTree>>>, app: &Application) {
     let data = disk::load().unwrap();
 
     let entry = Entry::builder()
+        .margin_top(8)
+        .margin_start(8)
+        .margin_end(8)
         .placeholder_text("Note a new task...")
         .secondary_icon_name("list-add-symbolic")
         .build();
@@ -72,7 +71,7 @@ fn on_activate(mut tree: Rc<RefCell<Option<AppTree>>>, app: &Application) {
     let task_list = ListBox::builder().build();
 
     let scrollable = ScrolledWindow::builder()
-        .margin_top(12)
+        .margin_top(8)
         .vexpand(true)
         .child(&task_list)
         .build();
@@ -105,22 +104,21 @@ fn on_activate(mut tree: Rc<RefCell<Option<AppTree>>>, app: &Application) {
     });
     entry.connect_icon_press(|entry, _| entry.emit_activate());
 
+    let header = HeaderBar::new();
+
     let content = gtk4::Box::builder()
         .orientation(Orientation::Vertical)
-        .margin_top(12)
-        .margin_bottom(12)
-        .margin_start(12)
-        .margin_end(12)
         .build();
+    content.append(&header);
     content.append(&entry);
     content.append(&scrollable);
 
     let window = ApplicationWindow::builder()
         .application(app)
         .title("Taakverse")
-        .default_width(400)
-        .default_height(600)
-        .child(&content)
+        .default_width(384)
+        .default_height(512)
+        .content(&content)
         .build();
     window.present();
 }
