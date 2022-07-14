@@ -3,8 +3,8 @@ mod disk;
 use gtk4::gdk::Display;
 use gtk4::prelude::*;
 use gtk4::{
-    CheckButton, CssProvider, Entry, Label, ListBox, Orientation, ScrolledWindow, SelectionMode,
-    StyleContext,
+    Align, Button, CheckButton, CssProvider, Entry, Label, ListBox, Orientation, ScrolledWindow,
+    SelectionMode, StyleContext,
 };
 use libadwaita::{Application, ApplicationWindow, HeaderBar};
 use std::borrow::BorrowMut;
@@ -43,9 +43,23 @@ fn main() {
     app.run();
 }
 
-fn build_task(id: Uuid, description: String, completed: bool) -> (gtk4::Box, TaskTree) {
+fn build_task(
+    tree: Rc<RefCell<Option<AppTree>>>,
+    id: Uuid,
+    description: String,
+    completed: bool,
+) -> (gtk4::Box, TaskTree) {
     let check_button = CheckButton::builder().active(completed).build();
-    let label = Label::builder().margin_start(4).label(&description).build();
+    let label = Label::builder()
+        .margin_start(4)
+        .label(&description)
+        .hexpand(true)
+        .halign(Align::Start)
+        .build();
+    let delete_button = Button::builder()
+        .icon_name("edit-delete-symbolic")
+        .halign(Align::End)
+        .build();
     let row = gtk4::Box::builder()
         .margin_top(4)
         .margin_bottom(4)
@@ -57,6 +71,7 @@ fn build_task(id: Uuid, description: String, completed: bool) -> (gtk4::Box, Tas
     }
     row.append(&check_button);
     row.append(&label);
+    row.append(&delete_button);
     check_button.connect_active_notify({
         let row = row.clone();
         move |check_button| {
@@ -67,6 +82,13 @@ fn build_task(id: Uuid, description: String, completed: bool) -> (gtk4::Box, Tas
             }
         }
     });
+    delete_button.connect_clicked(move |button| {
+        let mut tree = (*tree).borrow_mut();
+        let tree = tree.as_mut().unwrap();
+        let row_wrapper = button.parent().unwrap().parent().unwrap();
+        tree.task_list.remove(&row_wrapper);
+        tree.tasks.retain(|task| task.id != id);
+    });
     let tree = TaskTree {
         id,
         check_button,
@@ -75,8 +97,15 @@ fn build_task(id: Uuid, description: String, completed: bool) -> (gtk4::Box, Tas
     (row, tree)
 }
 
-fn add_task(tree: &mut AppTree, id: Uuid, description: String, completed: bool) {
-    let (row, task_tree) = build_task(id, description, completed);
+fn add_task(
+    tree_ptr: Rc<RefCell<Option<AppTree>>>,
+    id: Uuid,
+    description: String,
+    completed: bool,
+) {
+    let mut tree = (*tree_ptr).borrow_mut();
+    let tree = tree.as_mut().unwrap();
+    let (row, task_tree) = build_task(tree_ptr.clone(), id, description, completed);
     tree.task_list.append(&row);
     tree.tasks.push(task_tree);
 }
@@ -108,23 +137,13 @@ fn on_activate(mut tree: Rc<RefCell<Option<AppTree>>>, app: &Application) {
     }));
 
     for task in data.tasks {
-        add_task(
-            (*tree).borrow_mut().as_mut().unwrap(),
-            task.id,
-            task.description,
-            task.completed,
-        );
+        add_task(tree.clone(), task.id, task.description, task.completed);
     }
 
     entry.connect_activate({
         let tree = tree.clone();
         move |entry| {
-            add_task(
-                (*tree).borrow_mut().as_mut().unwrap(),
-                Uuid::new_v4(),
-                entry.buffer().text(),
-                false,
-            );
+            add_task(tree.clone(), Uuid::new_v4(), entry.buffer().text(), false);
             entry.buffer().delete_text(0, None);
         }
     });
