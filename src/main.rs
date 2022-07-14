@@ -25,7 +25,9 @@ struct AppTree {
 
 fn main() {
     let tree = Rc::new(RefCell::new(None));
-    let app = Application::builder().application_id("taakverse").build();
+    let app = Application::builder()
+        .application_id("solar.unneon.Taakverse")
+        .build();
     app.connect_startup(|_| {
         let provider = CssProvider::new();
         provider.load_from_data(include_bytes!("style.css"));
