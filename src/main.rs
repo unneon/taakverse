@@ -29,10 +29,7 @@ fn main() {
         let tree = tree.clone();
         move |app| on_activate(tree.clone(), app)
     });
-    app.connect_shutdown({
-        let tree = tree.clone();
-        move |app| on_shutdown(tree.clone(), app)
-    });
+    app.connect_shutdown(move |app| on_shutdown(tree.clone(), app));
     app.run();
 }
 
