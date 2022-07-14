@@ -23,11 +23,9 @@ struct AppTree {
     tasks: Vec<TaskTree>,
 }
 
-const APP_ID: &str = "solar.unneon.Taakverse";
-
 fn main() {
     let tree = Rc::new(RefCell::new(None));
-    let app = Application::builder().application_id(APP_ID).build();
+    let app = Application::builder().application_id("taakverse").build();
     app.connect_startup(|_| {
         let provider = CssProvider::new();
         provider.load_from_data(include_bytes!("style.css"));

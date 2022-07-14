@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Taakverse
+GenericName=Task Manager
+Comment=Manage your daily tasks
+Exec=taakverse
+Icon=todo
+Terminal=false
+Categories=Utility
+Keywords=todo
