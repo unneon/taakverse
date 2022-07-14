@@ -681,6 +681,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "taakverse"
+version = "0.0.0"
+dependencies = [
+ "dirs",
+ "gtk4",
+ "serde",
+ "serde_json",
+ "uuid",
+]
+
+[[package]]
 name = "thiserror"
 version = "1.0.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -698,17 +709,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
-]
-
-[[package]]
-name = "todo-thingy"
-version = "0.0.0"
-dependencies = [
- "dirs",
- "gtk4",
- "serde",
- "serde_json",
- "uuid",
 ]
 
 [[package]]

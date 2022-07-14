@@ -35,5 +35,5 @@ pub fn save(data: &Data) -> io::Result<()> {
 }
 
 fn make_path() -> PathBuf {
-    dirs::data_dir().unwrap().join("todo-thingy.json")
+    dirs::data_dir().unwrap().join("taakverse.json")
 }

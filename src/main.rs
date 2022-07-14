@@ -20,7 +20,7 @@ struct AppTree {
     tasks: Vec<TaskTree>,
 }
 
-const APP_ID: &str = "solar.unneon.TodoThingy";
+const APP_ID: &str = "solar.unneon.Taakverse";
 
 fn main() {
     let tree = Rc::new(RefCell::new(None));
@@ -120,7 +120,7 @@ fn on_activate(mut tree: Rc<RefCell<Option<AppTree>>>, app: &Application) {
 
     let window = ApplicationWindow::builder()
         .application(app)
-        .title("Todo Thingy")
+        .title("Taakverse")
         .default_width(400)
         .default_height(600)
         .child(&content)
