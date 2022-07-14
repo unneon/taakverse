@@ -1,0 +1,7 @@
+.completed {
+    opacity: 0.25;
+}
+
+.completed > label {
+    text-decoration: line-through;
+}

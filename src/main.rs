@@ -1,7 +1,11 @@
 mod disk;
 
+use gtk4::gdk::Display;
 use gtk4::prelude::*;
-use gtk4::{CheckButton, Entry, Label, ListBox, Orientation, ScrolledWindow};
+use gtk4::{
+    CheckButton, CssProvider, Entry, Label, ListBox, Orientation, ScrolledWindow, SelectionMode,
+    StyleContext,
+};
 use libadwaita::{Application, ApplicationWindow, HeaderBar};
 use std::borrow::BorrowMut;
 use std::cell::RefCell;
@@ -24,6 +28,15 @@ const APP_ID: &str = "solar.unneon.Taakverse";
 fn main() {
     let tree = Rc::new(RefCell::new(None));
     let app = Application::builder().application_id(APP_ID).build();
+    app.connect_startup(|_| {
+        let provider = CssProvider::new();
+        provider.load_from_data(include_bytes!("style.css"));
+        StyleContext::add_provider_for_display(
+            &Display::default().unwrap(),
+            &provider,
+            gtk4::STYLE_PROVIDER_PRIORITY_FALLBACK,
+        );
+    });
     app.connect_activate({
         let tree = tree.clone();
         move |app| on_activate(tree.clone(), app)
@@ -41,8 +54,21 @@ fn build_task(id: Uuid, description: String, completed: bool) -> (gtk4::Box, Tas
         .margin_start(8)
         .margin_end(8)
         .build();
+    if completed {
+        row.add_css_class("completed");
+    }
     row.append(&check_button);
     row.append(&label);
+    check_button.connect_active_notify({
+        let row = row.clone();
+        move |check_button| {
+            if check_button.is_active() {
+                row.add_css_class("completed");
+            } else {
+                row.remove_css_class("completed");
+            }
+        }
+    });
     let tree = TaskTree {
         id,
         check_button,
@@ -68,7 +94,9 @@ fn on_activate(mut tree: Rc<RefCell<Option<AppTree>>>, app: &Application) {
         .secondary_icon_name("list-add-symbolic")
         .build();
 
-    let task_list = ListBox::builder().build();
+    let task_list = ListBox::builder()
+        .selection_mode(SelectionMode::None)
+        .build();
 
     let scrollable = ScrolledWindow::builder()
         .margin_top(8)
